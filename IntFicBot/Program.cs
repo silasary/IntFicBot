@@ -3,6 +3,7 @@ using AngleSharp.Parser.Html;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -70,6 +71,8 @@ namespace IntFicBot
                 source = GetSourceFromGamePage(link);
                 if (source == null)
                     continue;
+                Console.WriteLine("");
+                Console.WriteLine(source);
                 try
                 {
                     switch (Path.GetExtension(source))
@@ -82,6 +85,9 @@ namespace IntFicBot
                         case ".html":
                             //todo: Deal with HTML source files.
                             ReadSource(source.Replace(".html", ".txt"));
+                            break;
+                        case ".zip":
+                        case ".sit": 
                             break;
                         default:
                             // Try anyway?
@@ -103,13 +109,20 @@ namespace IntFicBot
             var verify = new Regex("^\".+?\" by ", RegexOptions.Compiled);
             if (!verify.Match(source).Success) // Easiest way to verify the link isn't broken.
                 return;
-            var theDescription = new Regex("The description of (?<name>[\\w ]+) is \"(?<desc>.*?)\"");
+            var AllMatches = new List<Match>();
+            var theDescription = new Regex("The description of (?<name>[\\w ]+) is \"(?<desc>.*?)\"", RegexOptions.Compiled);
             var descriptions = theDescription.Matches(source);
+            AllMatches.AddRange(descriptions.Cast<Match>());
+
+            theDescription = new Regex("The (?<name>[\\w ]+) is a (?<type>[\\w ]+). +The description is \"(?<desc>.*?)\"", RegexOptions.Compiled);
+            descriptions = theDescription.Matches(source);
+            AllMatches.AddRange(descriptions.Cast<Match>());
+
 
             List<Match> sorted = new List<Match>();
             var rand = new Random();
             var i = 0;
-            foreach (Match desc in descriptions)
+            foreach (Match desc in AllMatches)
             {
                 sorted.Insert(rand.Next(i++), desc);
             }
@@ -127,28 +140,40 @@ namespace IntFicBot
 
         private static void TweetDescription(Match description)
         {
-            Console.WriteLine(description);
+            var text = Markup(description);
+            Console.WriteLine();
+            Console.WriteLine(text);
 
-            if (description.Length <= 140)
+            if (text.Length <= 140)
             {
-                string status = description.Value;
+                string status = text;
                 service.SendTweet(new SendTweetOptions() { Status = status });
 
             }
-            else if (description.Length > 140 * 2)
+            else if (text.Length > 140 * 2)
             {
-                service.SendTweet(new SendTweetOptions() { Status = description.Value.Substring(0, 139) + "…" });
+                service.SendTweet(new SendTweetOptions() { Status = text.Substring(0, 139) + "…" });
             }
             else
             {
-                var first = description.Value.Substring(0, 140);
+                var first = text.Substring(0, 140);
                 first = first.Substring(0, first.LastIndexOf(' '));
+                bool Elipsis = false;
+
                 if (first.LastIndexOf('.') > 100)
                 {
                     first = first.Substring(0, first.LastIndexOf('.') + 1);
                 }
+                else if (first.LastIndexOf('?') > 100)
+                {
+                    first = first.Substring(0, first.LastIndexOf('?') + 1);
+                }
+                else
+                {
+                    Elipsis = true;
+                }
 
-                var second = "…" + description.Value.Substring(first.Length);
+                var second = (Elipsis ? "…" : string.Empty) + text.Substring(first.Length);
                 if (second.Length > 40)
                 {
                     var a = service.SendTweet(new SendTweetOptions() { Status = first });
@@ -164,7 +189,31 @@ namespace IntFicBot
                 }
             }
 
-            Thread.Sleep(new TimeSpan(0, 1, 0));
+            if (Debugger.IsAttached)
+                Thread.Sleep(new TimeSpan(0, 0, 30));
+            else
+                Thread.Sleep(new TimeSpan(0, 30,0));
+
+        }
+
+        private static string Markup(Match description)
+        {
+            var value = description.Value;
+
+            // Line Break
+            value = value.Replace("[p]", "\n").Replace("[para]", "\n").Replace("[br]", "\n");
+            value = value.Replace("[line break]", "\n");
+
+            // Empty Substitutions. These text substitutions produces no text.
+            value = value.Replace("[no line break]", "").Replace("[run paragraph on]", "");
+
+            // Punctuation
+            value = value.Replace("[']", "'").Replace("[apostrophe]", "'").Replace("[quotation mark]", "\"");
+            value = value.Replace("[--]", "—");
+
+            // TODO: http://inform7.com/learn/man/WI_5_9.html
+
+            return value;
         }
 
         private static string GetSourceFromGamePage(string link)
