@@ -158,7 +158,7 @@ namespace IntFicBot
             {
                 var first = text.Substring(0, 140);
                 first = first.Substring(0, first.LastIndexOf(' '));
-                bool Elipsis = false;
+                bool elipsis = false;
 
                 if (first.LastIndexOf('.') > 100)
                 {
@@ -170,10 +170,10 @@ namespace IntFicBot
                 }
                 else
                 {
-                    Elipsis = true;
+                    elipsis = true;
                 }
 
-                var second = (Elipsis ? "…" : string.Empty) + text.Substring(first.Length);
+                var second = (elipsis ? "…" : string.Empty) + text.Substring(first.Length);
                 if (second.Length > 40)
                 {
                     var a = service.SendTweet(new SendTweetOptions() { Status = first });
@@ -208,10 +208,10 @@ namespace IntFicBot
             value = value.Replace("[no line break]", "").Replace("[run paragraph on]", "");
 
             // Punctuation
-            value = value.Replace("[']", "'").Replace("[apostrophe]", "'").Replace("[quotation mark]", "\"");
+            value = value.Replace("[apostrophe]", "[.]'") /*.Replace("[quotation mark]", "\"").Replace("[']", "'").*/;
             value = value.Replace("[--]", "—");
 
-            // TODO: http://inform7.com/learn/man/WI_5_9.html
+            // Maybe TODO: http://inform7.com/learn/man/WI_5_9.html
 
             return value;
         }
@@ -244,16 +244,22 @@ namespace IntFicBot
             var webClient = new WebClient();
             var parser = new HtmlParser();
 
-            top:
-            var search = webClient.DownloadString(SearchPage);
-            var document = parser.Parse(search);
-            var main = document.All.FirstOrDefault(m => m.ClassName == "main");
-            var games = main.Children.Where(p => p.TagName == "P");
-            foreach (var game in games)
+        top:
+            try
             {
-                var links = game.QuerySelectorAll("a").ToArray();
-                var gamelink = (links.First() as IHtmlAnchorElement).Href;
-                yield return gamelink;
+                var search = webClient.DownloadString(SearchPage);
+                var document = parser.Parse(search);
+                var main = document.All.FirstOrDefault(m => m.ClassName == "main");
+                var games = main.Children.Where(p => p.TagName == "P");
+                foreach (var game in games)
+                {
+                    var links = game.QuerySelectorAll("a").ToArray();
+                    var gamelink = (links.First() as IHtmlAnchorElement).Href;
+                    yield return gamelink;
+                }
+            }
+            catch (WebException c)
+            {
             }
 
             goto top;
