@@ -1,32 +1,29 @@
-﻿using AngleSharp.Dom.Html;
-using AngleSharp.Parser.Html;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using TweetSharp;
-
-namespace IntFicBot
+﻿namespace IntFicBot
 {
-    class Program
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
+    using System.Linq;
+    using System.Net;
+    using System.Text.RegularExpressions;
+    using System.Threading;
+    using AngleSharp.Dom.Html;
+    using AngleSharp.Parser.Html;
+    using Newtonsoft.Json;
+    using TweetSharp;
+
+    internal class Program
     {
-        private static WebClient webClient = new WebClient();
         private const string SearchPage = "http://ifdb.tads.org/search?sortby=rand&newSortBy.x=0&newSortBy.y=0&searchfor=tag%3Ai7+source+available";
+        private static WebClient webClient = new WebClient();
 
         private static TwitterService service;
         private static OAuthAccessToken access;
 
         private static void Main(string[] args)
         {
-
-            var AppInfo = new
+            var appInfo = new
             {
                 CLIENT_ID = Environment.GetEnvironmentVariable("CLIENT_ID"),
                 CLIENT_SECRET = Environment.GetEnvironmentVariable("CLIENT_SECRET")
@@ -34,15 +31,14 @@ namespace IntFicBot
 
             if (File.Exists("AppAuth.json"))
             {
-               AppInfo = JsonConvert.DeserializeAnonymousType(File.ReadAllText("AppAuth.json"), AppInfo);
+               appInfo = JsonConvert.DeserializeAnonymousType(File.ReadAllText("AppAuth.json"), appInfo);
             }
             else
             {
-                File.WriteAllText("AppAuth.json", JsonConvert.SerializeObject(AppInfo));
+                File.WriteAllText("AppAuth.json", JsonConvert.SerializeObject(appInfo));
             }
 
-
-            service = new TwitterService(AppInfo.CLIENT_ID, AppInfo.CLIENT_SECRET);
+            service = new TwitterService(appInfo.CLIENT_ID, appInfo.CLIENT_SECRET);
             access = null;
             if (File.Exists("token.json"))
             {
@@ -108,7 +104,10 @@ namespace IntFicBot
             var source = webClient.DownloadString(url);
             var verify = new Regex("^\".+?\" by ", RegexOptions.Compiled);
             if (!verify.Match(source).Success) // Easiest way to verify the link isn't broken.
+            {
                 return;
+            }
+
             var AllMatches = new List<Match>();
             var theDescription = new Regex("The description of (?<name>[\\w ]+) is \"(?<desc>.*?)\"", RegexOptions.Compiled);
             var descriptions = theDescription.Matches(source);
