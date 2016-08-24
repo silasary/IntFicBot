@@ -248,23 +248,27 @@
         {
             var webClient = new WebClient();
             var parser = new HtmlParser();
+            string search;
 
         top:
             try
             {
-                var search = webClient.DownloadString(SearchPage);
-                var document = parser.Parse(search);
-                var main = document.All.FirstOrDefault(m => m.ClassName == "main");
-                var games = main.Children.Where(p => p.TagName == "P");
-                foreach (var game in games)
-                {
-                    var links = game.QuerySelectorAll("a").ToArray();
-                    var gamelink = (links.First() as IHtmlAnchorElement).Href;
-                    yield return gamelink;
-                }
+                search = webClient.DownloadString(SearchPage);
             }
             catch (WebException c)
             {
+                Thread.Sleep(1000);
+                goto top;
+            }
+
+            var document = parser.Parse(search);
+            var main = document.All.FirstOrDefault(m => m.ClassName == "main");
+            var games = main.Children.Where(p => p.TagName == "P");
+            foreach (var game in games)
+            {
+                var links = game.QuerySelectorAll("a").ToArray();
+                var gamelink = (links.First() as IHtmlAnchorElement).Href;
+                yield return gamelink;
             }
 
             goto top;
