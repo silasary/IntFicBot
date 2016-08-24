@@ -188,11 +188,17 @@
                 }
             }
 
+            TimeSpan stime;
             if (Debugger.IsAttached)
-                Thread.Sleep(new TimeSpan(0, 0, 30));
+            {
+                stime = new TimeSpan(0, 0, 30);
+            }
             else
-                Thread.Sleep(new TimeSpan(0, 30,0));
-
+            {
+                stime = new TimeSpan(0, 30, 0);
+            }
+            Console.WriteLine("Sleeping {0} min...", stime.TotalMinutes);
+            Thread.Sleep(stime);
         }
 
         private static string Markup(Match description)
