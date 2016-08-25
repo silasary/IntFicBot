@@ -62,13 +62,25 @@
 
             foreach (string gamelink in RandomGames())
             {
-                var link = gamelink.Replace("about://", "");
                 string source;
-                source = GetSourceFromGamePage(link);
-                if (source == null)
+                try
+                {
+                    var link = gamelink.Replace("about://", "");
+                    source = GetSourceFromGamePage(link);
+                    if (source == null)
+                    {
+                        continue;
+                    }
+
+                    Console.WriteLine();
+                    Console.WriteLine(source);
+                }
+                catch (Exception)
+                {
+                    Thread.Sleep(1000);
                     continue;
-                Console.WriteLine("");
-                Console.WriteLine(source);
+                }
+
                 try
                 {
                     switch (Path.GetExtension(source))
@@ -188,17 +200,15 @@
                 }
             }
 
-            TimeSpan stime;
-            if (Debugger.IsAttached)
+            DateTime sleepUntil = DateTime.Now.AddMinutes(Math.Max(DateTime.Now.Minute % 30, 30));
+
+            var stime = sleepUntil.Subtract(DateTime.Now);
+            while (stime.TotalSeconds > 0)
             {
-                stime = new TimeSpan(0, 0, 30);
+                stime = sleepUntil.Subtract(DateTime.Now);
+                Console.WriteLine("Sleeping {0} min...", stime.TotalMinutes);
+                Thread.Sleep(stime);
             }
-            else
-            {
-                stime = new TimeSpan(0, 30, 0);
-            }
-            Console.WriteLine("Sleeping {0} min...", stime.TotalMinutes);
-            Thread.Sleep(stime);
         }
 
         private static string Markup(Match description)
