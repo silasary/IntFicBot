@@ -129,6 +129,9 @@
             descriptions = theDescription.Matches(source);
             AllMatches.AddRange(descriptions.Cast<Match>());
 
+            theDescription = new Regex(@"(?<name>[\w ]+) is a scene. \k<name> begins when (?<start>.+?)\.", RegexOptions.Compiled);
+            descriptions = theDescription.Matches(source);
+            AllMatches.AddRange(descriptions.Cast<Match>());
 
             List<Match> sorted = new List<Match>();
             var rand = new Random();
@@ -200,14 +203,14 @@
                 }
             }
 
-            DateTime sleepUntil = DateTime.Now.AddMinutes(Math.Max(DateTime.Now.Minute % 30, 30));
+            DateTime sleepUntil = DateTime.Now.AddMinutes(30 - DateTime.Now.Minute % 30);
 
             var stime = sleepUntil.Subtract(DateTime.Now);
             while (stime.TotalSeconds > 0)
             {
-                stime = sleepUntil.Subtract(DateTime.Now);
                 Console.WriteLine("Sleeping {0} min...", stime.TotalMinutes);
                 Thread.Sleep(stime);
+                stime = sleepUntil.Subtract(DateTime.Now);
             }
         }
 
