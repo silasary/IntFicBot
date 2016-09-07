@@ -146,7 +146,7 @@
             var descriptions = theDescription.Matches(source);
             AllMatches.AddRange(descriptions.Cast<Match>());
 
-            theDescription = new Regex("The (?<name>[\\w ]+) is a (?<type>[\\w ]+). +The description is \"(?<desc>.*?)\"", RegexOptions.Compiled);
+            theDescription = new Regex("(The )?(?<name>[\\w ]+) is (a|on) (?<type>[\\w ]+). +(The )?description is \"(?<desc>.*?)\"", RegexOptions.Compiled);
             descriptions = theDescription.Matches(source);
             AllMatches.AddRange(descriptions.Cast<Match>());
 
