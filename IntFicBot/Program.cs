@@ -33,10 +33,31 @@
             {
                appInfo = JsonConvert.DeserializeAnonymousType(File.ReadAllText("AppAuth.json"), appInfo);
             }
-            else
+
+            if (appInfo.CLIENT_ID == null || appInfo.CLIENT_SECRET == null)
             {
+                string id = appInfo.CLIENT_ID;
+                if (appInfo.CLIENT_ID == null)
+                {
+                    Console.Write("AppID: ");
+                    id = Console.ReadLine();
+                }
+
+                string secret = appInfo.CLIENT_SECRET;
+                if (appInfo.CLIENT_SECRET == null)
+                {
+                    Console.Write("Secret: ");
+                    secret = Console.ReadLine();
+                }
+
+                appInfo = new
+                {
+                    CLIENT_ID = id,
+                    CLIENT_SECRET = secret
+                };
                 File.WriteAllText("AppAuth.json", JsonConvert.SerializeObject(appInfo));
             }
+
 
             service = new TwitterService(appInfo.CLIENT_ID, appInfo.CLIENT_SECRET);
             access = null;
